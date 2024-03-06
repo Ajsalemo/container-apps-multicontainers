@@ -29,6 +29,12 @@
         },
         "azureContainerRegistryGoImageTag": {
             "type": "string"
+        },
+        "azureContainerRegistryInitContainerImageName": {
+            "type": "string"
+        },
+        "azureContainerRegistryInitContainerImageTag": {
+            "type": "string"
         }
     },
     "resources": [
@@ -76,6 +82,12 @@
                                 "cpu": 0.5,
                                 "memory": "1.0Gi"
                             }
+                        }
+                    ],
+                    "initContainers": [
+                        {
+                            "image": "[concat(parameters('azureContainerRegistryServerUrl'), '/', parameters('azureContainerRegistryInitContainerImageName'), ':', parameters('azureContainerRegistryInitContainerImageTag'))]",
+                            "name": "go-init"
                         }
                     ],
                     "scale": {
