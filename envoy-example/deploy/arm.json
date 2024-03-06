@@ -1,0 +1,89 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment_name": {
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "eastus",
+            "type": "string"
+        },
+        "azureContainerRegistryServerUrl": {
+            "type": "string"
+        },
+        "azureContainerRegistryPassword": {
+            "type": "securestring"
+        },
+        "azureContainerRegistryUsername": {
+            "type": "string"
+        },
+        "azureContainerRegistryEnvoyImageName": {
+            "type": "string"
+        },
+        "azureContainerRegistryEnvoyImageTag": {
+            "type": "string"
+        },
+        "azureContainerRegistryGoImageName": {
+            "type": "string"
+        },
+        "azureContainerRegistryGoImageTag": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.App/containerApps",
+            "apiVersion": "2023-05-01",
+            "name": "envoy-go-multicontainer",
+            "location": "[parameters('location')]",
+            "properties": {
+                "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments/', parameters('environment_name'))]",
+                "configuration": {
+                    "ingress": {
+                        "external": true,
+                        "targetPort": 10000
+                    },
+                    "secrets": [
+                        {
+
+                            "name": "azurecontainerregistrypasswordref",
+                            "value": "[parameters('azureContainerRegistryPassword')]"
+                        }
+                    ],
+                    "registries": [
+                        {
+                            "server": "[parameters('azureContainerRegistryServerUrl')]",
+                            "username": "[parameters('azureContainerRegistryUsername')]",
+                            "passwordSecretRef": "azurecontainerregistrypasswordref"
+                        }
+                    ]
+                },
+                "template": {
+                    "containers": [
+                        {
+                            "image": "[concat(parameters('azureContainerRegistryServerUrl'), '/', parameters('azureContainerRegistryEnvoyImageName'), ':', parameters('azureContainerRegistryEnvoyImageTag'))]",
+                            "name": "envoyproxy",
+                            "resources": {
+                                "cpu": 0.5,
+                                "memory": "1.0Gi"
+                            }
+                        },
+                        {
+                            "image": "[concat(parameters('azureContainerRegistryServerUrl'), '/', parameters('azureContainerRegistryGoImageName'), ':', parameters('azureContainerRegistryGoImageTag'))]",
+                            "name": "go",
+                            "resources": {
+                                "cpu": 0.5,
+                                "memory": "1.0Gi"
+                            }
+                        }
+                    ],
+                    "scale": {
+                        "minReplicas": 1,
+                        "maxReplicas": 1
+                    }
+                }
+            }
+        }
+    ]
+}
